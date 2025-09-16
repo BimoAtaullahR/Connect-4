@@ -1,0 +1,9 @@
+hal yang mau kubuat:
+- kotak 6x7 (sudah)
+- opsi untuk memilih kolom 1-7 (sudah)
+- menentukan posisi token sesuai kolom yang dipilih (sudah)
+- berganti pemain (sudah)
+- cek vertikal, horizontal, 2 diagonal apakah sudah ada yang connect four
+- jika ada maka berhenti dan tentukan pemenang
+- jika tidak ada pemenang sampai semua tempat token terpenuhi maka hasilnya draw
+- 
