@@ -3,6 +3,19 @@ using namespace std;
 
 char kotak[10][10];
 string arahConnectFour;
+int kolom;
+int bawahKolom[10];
+
+void cekInput(){
+    while(!(cin>>kolom) || kolom < 1 || kolom > 7 || bawahKolom[kolom+1] > 6){
+        if(bawahKolom[kolom+1] > 6) cout << "Kolom " << kolom << " sudah penuh, silakan pilih kolom lainnya: ";
+        else{
+            cout << "Input tidak valid, silakan input sebuah angka (1-7): ";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    }
+}
 
 bool connect4(int x, int y, char token){
     //CEK HORIZONTAL
@@ -74,11 +87,12 @@ bool connect4(int x, int y, char token){
         return true;
     }
 
-    cout << horizontal << " " << vertikal << " " << diagonal1 << " " << diagonal2 << endl;
+    // cout << horizontal << " " << vertikal << " " << diagonal1 << " " << diagonal2 << endl;
     //sampai sini jika tidak ada connect four
     return false;
-
 }
+
+
 
 int main(){
     for(int i = 1; i <= 7; i++){
@@ -87,29 +101,21 @@ int main(){
                 kotak[i][j] = '|';
             }
             else if(i==7){
-                kotak[i][j] = '_';
+                kotak[i][j] = '-';
             }
             else kotak[i][j] = ' ';
-            cout << kotak[i][j];
+            cout << kotak[i][j] << " ";
         }
         cout << endl;
     }
 
     int round = 1;
-    int bawahKolom[10];
     fill(begin(bawahKolom), end(bawahKolom), 1);
 
     while(round <= 42){
         cout << "Pilih Kolom 1-7: ";
-        int kolom; cin >> kolom;
-        while(kolom < 1 || kolom > 7){
-            cout << "Input tidak valid, silakan pilih kolom yang sesuai (1-7): ";
-            cin >> kolom;
-        }
-        while(bawahKolom[kolom+1] > 6){
-            cout << "Kolom " << kolom << " sudah penuh, silakan pilih kolom lainnya: ";
-            cin >> kolom;
-        }
+        cekInput();
+
         char token;
         if(round%2) token = 'X';
         else token = 'O';
@@ -117,7 +123,7 @@ int main(){
         
         for(int i = 1; i <= 7; i++){
             for(int j = 1; j <= 9; j++){
-                cout << kotak[i][j];
+                cout << kotak[i][j] << " ";
             }
             cout << endl;
         }

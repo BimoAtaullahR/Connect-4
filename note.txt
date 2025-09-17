@@ -6,4 +6,10 @@ hal yang mau kubuat:
 - cek vertikal, horizontal, 2 diagonal apakah sudah ada yang connect four
 - jika ada maka berhenti dan tentukan pemenang
 - jika tidak ada pemenang sampai semua tempat token terpenuhi maka hasilnya draw
-- 
+-
+
+cek input
+pertama cek tipe datanya
+jika aman lanjut 
+jika tidak ulang
+
