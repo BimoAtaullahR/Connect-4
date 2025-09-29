@@ -5,7 +5,10 @@
 #include <limits>
 #include <chrono>
 #include <thread>
+#include <future>
 #include <vector>
+#include <stdexcept>
+#include <random>
 
 #define fi first
 #define se second
@@ -15,7 +18,7 @@ using namespace std;
 string pemain1, pemain2;
 char kotak[10][10];
 string arahConnectFour;
-int kolom, ronde, temp, giliran, giliranTemp, skorPemain1, skorPemain2;
+int kolom, ronde, temp, giliran, giliranTemp, skorPemain1, skorPemain2, waktuMaks;
 char token;
 int bawahKolom[10];
 vector<pair<int,int>> tokenKemenangan;
@@ -91,15 +94,70 @@ void inputWarna(){
 }
 
 void cekInput(){
-    while(!(cin>>kolom) || kolom < 1 || kolom > 7 || bawahKolom[kolom+1] > 6){
-        if(bawahKolom[kolom+1] > 6) cout <<  "Kolom " << kolom << " sudah penuh, silakan pilih kolom lainnya: ";
-        else{
-            cout << "Input tidak valid, silakan input sebuah angka (1-7): ";
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    int sisaWaktu = waktuMaks;
+    cout << "(" << ((giliranTemp==1) ? pemain1 : pemain2) << ", " << token << ") Pilih Kolom 1-7" << endl;
+    bool inputValid = true;
+    promise<string> prom;
+    future<string> future = prom.get_future();
+    thread t([&](promise<string> p){
+        string masukan;
+        getline(cin, masukan);
+        p.set_value(masukan);
+    }, move(prom));
+
+    t.detach();
+
+    while(sisaWaktu > 0){
+        cout << "\r" << "\x1b[2K"; //ke awal baris dan menghapus tulisan-tulisan baris kursor saat ini
+        cout << "(Sisa waktu " << sisaWaktu << "): " << flush;
+        
+        // auto future = async(launch::async, [](){
+        //     string masukan;
+        //     // int column;
+        //     getline(cin, masukan);
+        //     return masukan;
+        // });
+
+
+        auto waktu = chrono::seconds(1);
+        if(future.wait_for(waktu) == future_status::ready){ //akan memenuhi jika pemain memasukkan suatu input
+            break;
+        }
+        else sisaWaktu--;
+
+    }  
+    cout << "\r" << "\x1b[2K";
+    if(future.wait_for(chrono::seconds(0))==future_status::ready){
+        string masukan = future.get();
+        int column ;
+        try{
+            if(masukan.empty()){
+                throw invalid_argument("Input tidak boleh kosong");
+            }
+            column = stoi(masukan);
+            if(column < 1 || column > 7){
+                throw invalid_argument("");
+            }
+            else{
+                inputValid = true;
+                kolom = column;
+            } 
+        } catch(const exception& e){ //invalid jika bukan angka dan masukan kosong
+            inputValid = false;
         }
     }
 
+    if(sisaWaktu==0 || !inputValid){ //kinda technical
+        if(!inputValid) cout << "Input tidak valid, kolom akan dipilih random";
+        else cout << "Waktu habis, kolom akan dipilih random";
+        this_thread::sleep_for(chrono::seconds(2));
+
+        //menentukan kolom dengan bilangan random
+        random_device rd;
+        mt19937 gen(rd());
+        uniform_int_distribution distrib(1, 7);
+        kolom = distrib(gen);
+    }     
 }
 
 bool connect4(int x, int y, char token){
@@ -264,11 +322,22 @@ int main(){
     cout << "Nama Pemain 1: "; cin >> pemain1;
     cout << "Nama Pemain 2: "; cin >> pemain2;
     cout << "Berapa banyak ronde permainan yang mau dimainkan? (bilangan ganjil): ";
-    while(!(cin >> ronde) || ronde%2==0){
+    while(!(cin >> ronde) || ronde%2==0 || ronde <= 0){
         cout << "Input tidak valid, silakan input kembali (integer/bilangan ganjil): ";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
-
+    
+    cout << "Berapa lama waktu maksimal per giliran permainan? (detik): ";
+    while(!(cin >> waktuMaks) || waktuMaks <= 0){
+        cout << "Input tidak valid, silakan input kembali (bilangan positif): ";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+    
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
     inputWarna();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
     temp = ronde;
     giliran = 2;
 
@@ -296,14 +365,12 @@ int main(){
             }
             // cout << endl;
         }
-    
+        
         int round = 1;
         fill(begin(bawahKolom), end(bawahKolom), 1);
         cetakKotakBiasaDanSkor();
         
         while(round <= 42){
-            
-            cout <<"(" << ((giliranTemp==1) ? pemain1 : pemain2) << ", " << token << ") Pilih Kolom 1-7: ";
             cekInput();
             
             cetakAnimasiKotak();
@@ -338,13 +405,14 @@ int main(){
         }
     
         if(imbang) cout << "Permainan Imbang, Silakan Coba Ulang Lagi Permainannya!" << endl;
-        else temp--;
-        if(temp){
-            cout << "Lanjutkan permainan? (y/n)";
+        temp--;
+        if(temp && max(skorPemain1, skorPemain2) < ronde/2+1){
+            cout << "Lanjutkan permainan? (y/n): ";
             string input;
             while((cin >> input) && input != "y" && input != "n"){
                 cout << "Input tidak valid, silakan input kembali (y/n): ";
             }
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
             if(input == "n") break;
         }
         
@@ -352,7 +420,7 @@ int main(){
 
     cout << endl;
     if(skorPemain1 != skorPemain2) cout << "Selamat, " << ((skorPemain1 > skorPemain2) ? pemain1 : pemain2)
-    << " memenangkan permainan Connect Four ini dengan skor " << max(skorPemain1, skorPemain2) << " kemenangan dari" << ronde-temp << " ronde permainan" << endl;
+    << " memenangkan permainan Connect Four ini dengan skor " << max(skorPemain1, skorPemain2) << " kemenangan dari " << ronde-temp << " ronde permainan" << endl;
     else{
         cout << "Permainan Connect Four ini berakhir imbang dengan skor masing-masing pemain: " << endl;
         cout << pemain1 << ": " << skorPemain1 << endl;
