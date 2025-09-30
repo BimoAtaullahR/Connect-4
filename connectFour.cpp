@@ -135,7 +135,7 @@ void cekInput(){
                 throw invalid_argument("Input tidak boleh kosong");
             }
             column = stoi(masukan);
-            if(column < 1 || column > 7){
+            if(column < 1 || column > 7 || bawahKolom[column+1] > 6){
                 throw invalid_argument("");
             }
             else{
